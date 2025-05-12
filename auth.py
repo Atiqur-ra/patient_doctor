@@ -54,3 +54,8 @@ def get_current_pharmacy_user(current_user: User = Depends(get_current_user)):
             detail="Only pharmacy staff can perform this action"
         )
     return current_user
+
+def get_admin_user(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return current_user

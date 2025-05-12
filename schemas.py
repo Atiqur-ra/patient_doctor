@@ -2,10 +2,12 @@ from pydantic import BaseModel, EmailStr
 from enum import Enum
 from datetime import datetime
 from typing import List, Optional
+from models import UserRole
 class RoleEnum(str, Enum):
     patient = "patient"
     doctor = "doctor"
     pharmacy = "pharmacy"
+    admin = "admin"
 
 class UserCreate(BaseModel):
     name: str
@@ -182,3 +184,9 @@ class BillResponse(BaseModel):
     billed_by: str
     medicines: List[BillMedicineItem]
     total_amount: float
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str]
+    email: Optional[str]
+    role: Optional[UserRole]
