@@ -5,6 +5,7 @@ from typing import List, Optional
 class RoleEnum(str, Enum):
     patient = "patient"
     doctor = "doctor"
+    pharmacy = "pharmacy"
 
 class UserCreate(BaseModel):
     name: str
@@ -128,15 +129,56 @@ class PrescriptionOut(BaseModel):
 
 class ReviewCreate(BaseModel):
     appointment_id: int
-    rating: int
     comment: Optional[str] = None
 
 class ReviewOut(BaseModel):
     id: int
     doctor_id: int
-    rating: int
     comment: Optional[str]
     created_at: datetime
 
     class Config:
         orm_mode = True
+
+class MedicineBase(BaseModel):
+    name: str
+    description: str = ""
+    quantity: int
+    price: float
+
+class MedicineCreate(MedicineBase):
+    pass
+
+class MedicineUpdate(BaseModel):
+    quantity: int
+    price: float
+
+class MedicineOut(MedicineBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
+class BillingItemCreate(BaseModel):
+    medicine_id: int
+    quantity: int
+
+class BillItem(BaseModel):
+    medicine_id: int
+    quantity: int
+
+class BillCreate(BaseModel):
+    patient_id: int
+    items: list[BillItem]
+
+
+class BillMedicineItem(BaseModel):
+    medicine_name: str
+    quantity: int
+
+class BillResponse(BaseModel):
+    patient_name: str
+    billed_by: str
+    medicines: List[BillMedicineItem]
+    total_amount: float

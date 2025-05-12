@@ -6,6 +6,11 @@ from models import Document, Appointment, User
 from utils.security import get_current_user
 from fastapi.responses import FileResponse, StreamingResponse
 from schemas import DocumentPreviewOut
+from auth import get_current_patient
+from typing import List
+from schemas import DocumentOut
+from fastapi import Request
+
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -66,4 +71,29 @@ def view_document(document_id: int, db: Session = Depends(get_db), current_user:
         path=document.path,
         media_type=document.content_type,
         filename=document.filename
+    )
+
+@router.get("/patient-view-documents", response_model=List[DocumentOut])
+def preview_latest_patient_document(
+    current_user=Depends(get_current_patient),
+    db: Session = Depends(get_db)
+):
+    # Get the latest document uploaded by this patient
+    document = (
+        db.query(Document)
+        .filter(Document.uploaded_by_id == current_user.id)
+        .order_by(Document.id.desc())
+        .first()
+    )
+
+    if not document:
+        raise HTTPException(status_code=404, detail="No document found")
+
+    if not os.path.exists(document.path):
+        raise HTTPException(status_code=404, detail="File is missing on server")
+
+    return StreamingResponse(
+        open(document.path, "rb"),
+        media_type=document.content_type,
+        headers={"Content-Disposition": f'inline; filename="{document.filename}"'}
     )

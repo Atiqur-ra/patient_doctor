@@ -7,6 +7,8 @@ from auth import get_current_doctor
 from models import User
 from typing import List
 from auth import get_current_patient
+from auth import get_current_user
+from models import DispensedMedicine
 
 router = APIRouter()
 
@@ -35,3 +37,4 @@ def create_prescription(prescription: PrescriptionCreate, db: Session = Depends(
 @router.get("/prescriptions/", response_model=List[PrescriptionOut])
 def get_prescriptions_for_patient(db: Session = Depends(get_db), current_user: User = Depends(get_current_patient)):
     return db.query(Prescription).filter_by(patient_id=current_user.id).all()
+

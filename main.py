@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from database import Base, engine
-from routers import user, appointment, availability,search, documents, prescription, review
+from routers import user, appointment, availability,search, documents, prescription, review, medicine
 
 Base.metadata.create_all(bind=engine)
 
@@ -13,3 +13,4 @@ app.include_router(appointment.router)
 app.include_router(documents.router)
 app.include_router(prescription.router, prefix="/api", tags=["Prescriptions"])
 app.include_router(review.router)
+app.include_router(medicine.router)

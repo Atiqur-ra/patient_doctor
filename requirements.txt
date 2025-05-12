@@ -7,3 +7,7 @@ python-jose
 bcrypt
 psycopg2
 python-multipart
+google-generativeai
+python-dotenv
+easyocr 
+pillow

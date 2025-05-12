@@ -75,3 +75,4 @@ def view_appointments_for_doctor(
             doc.download_url = f"{request.base_url}documents/download/{doc.id}"
 
     return appointments
+
