@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from enum import Enum
 from datetime import datetime
 from typing import List, Optional
-from models import UserRole
+from models.user_model import UserRole
 class RoleEnum(str, Enum):
     patient = "patient"
     doctor = "doctor"
@@ -14,7 +14,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     role: RoleEnum
-    department: str | None = None  # Optional unless role is doctor
+    department: str | None = None
 
 class UserOut(BaseModel):
     id: int

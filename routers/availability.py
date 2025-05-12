@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import DoctorAvailability, User
+from models.user_model import  User
+from models.appointment_model import DoctorAvailability
 from schemas import AvailabilityCreate, AvailabilityOut
 from utils.security import get_current_user
 

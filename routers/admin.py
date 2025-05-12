@@ -3,7 +3,11 @@ from schemas import UserUpdate
 from sqlalchemy.orm import Session
 from database import get_db
 from auth import get_admin_user
-from models import User, Medicine, Appointment, Prescription, Review
+from models.user_model import User
+from models.appointment_model import Appointment
+from models.medicine_model import Medicine
+from models.prescription_model import Prescription
+from models.reviews_model import Review
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 

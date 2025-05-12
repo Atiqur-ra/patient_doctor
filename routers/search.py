@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from database import get_db
-from models import User, DoctorAvailability
+from models.user_model import User
+from models.appointment_model import DoctorAvailability
 from schemas import AvailabilityOut
 from typing import List
 

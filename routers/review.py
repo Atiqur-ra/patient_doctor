@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import Review, Appointment, User
+from models.appointment_model import Appointment
+from models.user_model import User
+from models.reviews_model import Review
 from schemas import ReviewCreate, ReviewOut
 from database import get_db
 from auth import get_current_patient

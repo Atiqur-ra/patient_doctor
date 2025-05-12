@@ -1,20 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Medicine
+from models.medicine_model import Medicine
 from schemas import MedicineCreate, MedicineUpdate, MedicineOut
 from auth import get_current_pharmacy_user
 from typing import List
 from fastapi import Query
-from models import Prescription
+from models.prescription_model import Prescription
 from auth import get_current_user
-from models import User
+from models.user_model import User
 from typing import Optional
-from fastapi import Query
 from schemas import BillResponse
 from schemas import BillCreate
 from schemas import BillMedicineItem
-from models import Billing, BillingItem, MedicineImage
+from models.medicine_model import Billing
+from models.medicine_model import BillingItem
+from models.medicine_model import MedicineImage
 from utils.ocr import extract_text_from_image
 import os
 from fastapi import UploadFile, File

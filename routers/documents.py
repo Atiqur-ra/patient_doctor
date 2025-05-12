@@ -1,15 +1,15 @@
 import os
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Document, Appointment, User
+from models.user_model import User
+from models.documents_model import Document
 from utils.security import get_current_user
 from fastapi.responses import FileResponse, StreamingResponse
-from schemas import DocumentPreviewOut
 from auth import get_current_patient
 from typing import List
 from schemas import DocumentOut
-from fastapi import Request
+
 
 
 UPLOAD_FOLDER = "uploads"

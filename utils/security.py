@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
 from database import get_db
 from sqlalchemy.orm import Session
-from models import User
+from models.user_model import User
 
 # Change this in production
 SECRET_KEY = "your-secret-key"

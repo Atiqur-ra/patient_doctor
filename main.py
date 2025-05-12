@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from database import Base, engine
 from routers import user, appointment, availability,search, documents, prescription, review, medicine
 from routers import admin
+from models import user_model
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()

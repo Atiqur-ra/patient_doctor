@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import Appointment, Prescription
+from models.appointment_model import Appointment
+from models.prescription_model import Prescription
 from schemas import PrescriptionCreate, PrescriptionOut
 from database import get_db
 from auth import get_current_doctor
-from models import User
+from models.user_model import User
 from typing import List
 from auth import get_current_patient
-from auth import get_current_user
-from models import DispensedMedicine
+
 
 router = APIRouter()
 
