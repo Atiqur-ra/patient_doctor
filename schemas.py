@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from enum import Enum
 from datetime import datetime
 from typing import List, Optional
@@ -24,7 +24,7 @@ class UserOut(BaseModel):
     department: str | None
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str
@@ -45,7 +45,7 @@ class AppointmentOut(BaseModel):
     status: str
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class AvailabilityCreate(BaseModel):
     available_time: datetime
@@ -56,7 +56,7 @@ class AvailabilityOut(BaseModel):
     available_time: datetime
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class DocumentOut(BaseModel):
     id: int
@@ -65,7 +65,7 @@ class DocumentOut(BaseModel):
     path: str
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class DocumentOut(BaseModel):
     id: int
@@ -75,7 +75,7 @@ class DocumentOut(BaseModel):
     download_url: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 
 class DocumentPreviewOut(BaseModel):
@@ -84,7 +84,7 @@ class DocumentPreviewOut(BaseModel):
     content_type: str
     preview_url: str
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class PatientOut(BaseModel):
     id: int
@@ -92,7 +92,7 @@ class PatientOut(BaseModel):
     email: str
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class AppointmentWithDocsOut(BaseModel):
     id: int
@@ -101,7 +101,7 @@ class AppointmentWithDocsOut(BaseModel):
     documents: List[DocumentOut] = []
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class PatientOut(BaseModel):
     id: int
@@ -109,7 +109,7 @@ class PatientOut(BaseModel):
     email: str
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class PrescriptionCreate(BaseModel):
     patient_id: int
@@ -126,7 +126,7 @@ class PrescriptionOut(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 
 class ReviewCreate(BaseModel):
@@ -140,7 +140,7 @@ class ReviewOut(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class MedicineBase(BaseModel):
     name: str
@@ -159,7 +159,7 @@ class MedicineOut(MedicineBase):
     id: int
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 
 class BillingItemCreate(BaseModel):
