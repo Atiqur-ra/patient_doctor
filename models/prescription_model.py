@@ -15,8 +15,10 @@ class Prescription(Base):
     medicines = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    appointment = relationship("Appointment", back_populates="prescriptions")
+    appointment = relationship("Appointment", back_populates="prescription")
     doctor = relationship("User", foreign_keys=[doctor_id])
     patient = relationship("User", foreign_keys=[patient_id])
 
-Appointment.prescriptions = relationship("Prescription", back_populates="appointment")
+
+
+# Appointment.prescriptions = relationship("Prescription", back_populates="appointment")

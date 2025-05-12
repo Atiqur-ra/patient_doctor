@@ -13,3 +13,11 @@ pillow
 pytest 
 httpx 
 pytest-asyncio
+PyPDF2
+pinecone
+firebase_admin
+python-dotenv
+google-generativeai
+langchain
+langchain-google-genai
+profanity-check

@@ -2,7 +2,10 @@ from fastapi import FastAPI
 from database import Base, engine
 from routers import user, appointment, availability,search, documents, prescription, review, medicine
 from routers import admin
-from models import user_model
+from routers import document_rag
+from sqlalchemy.orm import configure_mappers
+from models import * 
+configure_mappers()
 
 Base.metadata.create_all(bind=engine)
 
@@ -17,3 +20,4 @@ app.include_router(documents.router)
 app.include_router(prescription.router, prefix="/api", tags=["Prescriptions"])
 app.include_router(review.router)
 app.include_router(medicine.router)
+app.include_router(document_rag.router)

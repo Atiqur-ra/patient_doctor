@@ -20,8 +20,6 @@ UPLOAD_DIR = "uploaded_documents"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-
-
 @router.post("/book/", response_model=AppointmentOut)
 def book_appointment(
     doctor_id: int = Form(...),

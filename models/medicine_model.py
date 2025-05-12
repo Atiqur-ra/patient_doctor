@@ -43,8 +43,8 @@ class Bill(Base):
 
     patient = relationship("User", foreign_keys=[patient_id])
     medicine = relationship("Medicine")
-    pharmacy_staff = relationship("User", foreign_keys=[billed_by])
-    billed_by_user = relationship("User", foreign_keys=[billed_by])
+    pharmacy_staff = relationship("User", foreign_keys=[billed_by],overlaps="billed_by_user")
+    billed_by_user = relationship("User", foreign_keys=[billed_by],overlaps="pharmacy_staff")
 
 
 

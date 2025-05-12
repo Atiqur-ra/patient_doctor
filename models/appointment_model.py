@@ -15,7 +15,7 @@ class Appointment(Base):
     patient = relationship("User", foreign_keys=[patient_id])
     doctor = relationship("User", foreign_keys=[doctor_id])
     documents = relationship("Document", back_populates="appointment")
-    prescription = relationship("Prescription", uselist=False, back_populates="appointment")
+    prescription = relationship("Prescription", back_populates="appointment",uselist=False)
 
 
 class DoctorAvailability(Base):

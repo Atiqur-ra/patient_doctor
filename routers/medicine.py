@@ -16,7 +16,7 @@ from schemas import BillMedicineItem
 from models.medicine_model import Billing
 from models.medicine_model import BillingItem
 from models.medicine_model import MedicineImage
-from utils.ocr import extract_text_from_image
+from external.ocr import extract_text_from_image
 import os
 from fastapi import UploadFile, File
 
