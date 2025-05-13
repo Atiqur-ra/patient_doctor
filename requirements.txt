@@ -23,3 +23,4 @@ langchain-google-genai
 profanity-check
 langchain-community
 sentence-transformers
+langchain_huggingface

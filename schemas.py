@@ -58,6 +58,16 @@ class AvailabilityOut(BaseModel):
     class Config:
         model_config = ConfigDict(from_attributes=True)
 
+class AvailabilityWithDoctorInfo(BaseModel):
+    id: int
+    doctor_id: int
+    available_time: datetime
+    doctor_name: str
+    doctor_rating: Optional[float]
+
+    class Config:
+        model_config = ConfigDict(from_attributes=True)      
+
 class DocumentOut(BaseModel):
     id: int
     filename: str

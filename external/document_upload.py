@@ -1,7 +1,6 @@
 from PyPDF2 import PdfReader
 from logger import logging
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from pinecone import Pinecone, ServerlessSpec
 from exception import CustomException
 from dotenv import load_dotenv
@@ -18,7 +17,7 @@ load_dotenv()
 
 # for initializing Pinecone
 pc = Pinecone(
-    api_key="pcsk_3um4hy_NirYyZX1yqKQ5mfLse4t5icdao8xNLPCSNPaZ2wZSY9cfYmVZrTm8Yn5zhqbKEv"
+    api_key=os.getenv("PINCONE_API"),
 )
 
 index_name = 'langchainvector1'
@@ -38,7 +37,6 @@ def handle_document_upload(uploaded_file, chat_name: str, patient_id: int, db: S
         text_chunks = split_text_into_chunks(text)
 
         index = pc.Index(index_name)
-        # embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         vectors = embeddings.embed_documents(text_chunks)
 

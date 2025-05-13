@@ -11,11 +11,10 @@ load_dotenv()
 
 
 
-# for initializing Pinecone
 
 
 pc = Pinecone(
-    api_key="pcsk_3um4hy_NirYyZX1yqKQ5mfLse4t5icdao8xNLPCSNPaZ2wZSY9cfYmVZrTm8Yn5zhqbKEv"
+    api_key=os.getenv("PINCONE_API")
 )
 
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
