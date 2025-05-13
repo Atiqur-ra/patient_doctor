@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from database import get_db
 from models.document_index_model import DocumentIndex
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 import sys
 import os
@@ -17,16 +18,16 @@ load_dotenv()
 
 # for initializing Pinecone
 pc = Pinecone(
-    api_key=os.environ["PINCONE_API"]
+    api_key="pcsk_3um4hy_NirYyZX1yqKQ5mfLse4t5icdao8xNLPCSNPaZ2wZSY9cfYmVZrTm8Yn5zhqbKEv"
 )
 
-index_name = 'langchainvector'
+index_name = 'langchainvector1'
 
 # for checking the index exits or not
 if index_name not in pc.list_indexes().names():
     pc.create_index(
         name=index_name,
-        dimension=768,
+        dimension=384,
         metric='cosine',
         spec=ServerlessSpec(cloud='aws', region='us-east-1')
     )
@@ -37,7 +38,8 @@ def handle_document_upload(uploaded_file, chat_name: str, patient_id: int, db: S
         text_chunks = split_text_into_chunks(text)
 
         index = pc.Index(index_name)
-        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        # embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         vectors = embeddings.embed_documents(text_chunks)
 
         upsert_data = [

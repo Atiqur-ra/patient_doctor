@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from sqlalchemy import Column, String, Enum, Integer
+from pydantic import BaseModel
 
 class UserRole(str, enum.Enum):
     PATIENT = "patient"
@@ -23,3 +24,4 @@ class User(Base):
     department = Column(String, nullable=True) 
     availabilities = relationship("DoctorAvailability", back_populates="doctor")
     patient = relationship("Patient", back_populates="user", uselist=False)
+

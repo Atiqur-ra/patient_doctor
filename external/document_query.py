@@ -1,66 +1,66 @@
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
-from langchain.chains.question_answering import load_qa_chain
+
 from langchain.docstore.document import Document
-from firebase_admin import firestore
 from pinecone import Pinecone
+from langchain_huggingface import HuggingFaceEmbeddings
 from logger import logging
 from exception import CustomException
 import sys, os
 from dotenv import load_dotenv
+from transformers import pipeline
 load_dotenv()
 
 
+
 # for initializing Pinecone
+
+
 pc = Pinecone(
-    api_key=os.environ["PINCONE_API"]
+    api_key="pcsk_3um4hy_NirYyZX1yqKQ5mfLse4t5icdao8xNLPCSNPaZ2wZSY9cfYmVZrTm8Yn5zhqbKEv"
 )
 
-def handle_document_query(chat_name, question):
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+
+pipe = pipeline("text2text-generation", model="google/flan-t5-large")
+
+def handle_document_query(chat_name: str, question: str):
     try:
-        # fectching index from firebase
-        db = firestore.client()
-        index_ref = db.collection("document_indices").document(chat_name).get()
+        index_name = "langchainvector1"
+        namespace = chat_name
 
-        if not index_ref.exists:
-            raise ValueError(f"Document index {chat_name} not found")
-
-        index_name = index_ref.to_dict().get("index_name")
         index = pc.Index(index_name)
 
-        # embeding the questioin into vector
-        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        # Embed the question
+        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         vector_query = embeddings.embed_query(question)
 
         # Query Pinecone
         search_result = index.query(
-            vector=vector_query, namespace=chat_name,top_k=3, include_values=False, include_metadata=True
+            vector=vector_query,
+            namespace=namespace,
+            top_k=3,
+            include_values=False,
+            include_metadata=True
         )
 
+        # Convert results to LangChain Document objects
         docs = [
             Document(page_content=result['metadata']['text'])
             for result in search_result['matches']
             if 'metadata' in result
         ]
+        
+        
+        context = "\n".join([doc.page_content for doc in docs])
+        input_text = f"Context: {context} \nQuestion: {question}"
 
-        chain = get_conversational_chain()
-        response = chain({"input_documents": docs, "question": question}, return_only_outputs=True)
+        # Use the Hugging Face pipeline to generate the answer
+        response = pipe(input_text)
 
-        return response['output_text']
+    
+        return response[0]['generated_text']
 
     except Exception as e:
         logging.error(f"Error during document query: {str(e)}")
         raise CustomException(e, sys)
 
-def get_conversational_chain():
-    prompt_template = """
-    Answer the question as detailed as possible from the provided context. If the answer is not in the provided context, 
-    say 'answer is not available in the context'.\n\n
-    Context:\n {context}?\n
-    Question: \n{question}\n
-    Answer:
-    """
-    model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.3)
-    prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
-    return load_qa_chain(model, chain_type="stuff", prompt=prompt)
+

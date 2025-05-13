@@ -65,20 +65,26 @@ def upload_patient_doc_to_pinecone(
 def query_patient_document(
     patient_identifier: str = Form(...),
     question: str = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_doctor)
 ):
     try:
-        # Identify patient
+        # Determine patient ID
         if patient_identifier.isdigit():
             patient_id = int(patient_identifier)
         else:
-            user = db.query(User).filter(User.name == patient_identifier).first()
-            if not user:
+            patient = db.query(User).filter(User.name == patient_identifier).first()
+            if not patient:
                 raise HTTPException(status_code=404, detail="Patient not found")
-            patient_id = user.id
+            patient_id = patient.id
 
-        # Call vector DB query
-        answer = handle_document_query(chat_name=str(patient_id), question=question)
+        # Fetch patient object regardless of path
+        user = db.query(User).filter(User.id == patient_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Patient not found")
+
+        # Use patient name as chat_name
+        answer = handle_document_query(chat_name=str(user.name), question=question)
 
         return {"answer": answer}
 
