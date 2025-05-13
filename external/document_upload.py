@@ -1,4 +1,5 @@
-from PyPDF2 import PdfReader
+# from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from logger import logging
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pinecone import Pinecone, ServerlessSpec

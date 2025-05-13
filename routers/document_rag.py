@@ -8,7 +8,7 @@ import os
 from external.document_query import handle_document_query
 from fastapi import Form
 
-router = APIRouter(prefix="/rag", tags=["Doctor Document RAG"])
+router = APIRouter(prefix="/rag", tags=["DOCUMENT Query"])
 
 
 @router.post("/upload-to-pinecone/")

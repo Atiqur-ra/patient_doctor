@@ -23,8 +23,7 @@ class UserOut(BaseModel):
     role: RoleEnum
     department: str | None
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str
@@ -44,8 +43,7 @@ class AppointmentOut(BaseModel):
     appointment_time: datetime
     status: str
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 class AvailabilityCreate(BaseModel):
     available_time: datetime
@@ -55,8 +53,7 @@ class AvailabilityOut(BaseModel):
     doctor_id: int
     available_time: datetime
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 class AvailabilityWithDoctorInfo(BaseModel):
     id: int
@@ -65,8 +62,7 @@ class AvailabilityWithDoctorInfo(BaseModel):
     doctor_name: str
     doctor_rating: Optional[float]
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)      
+    model_config = ConfigDict(from_attributes=True)      
 
 class DocumentOut(BaseModel):
     id: int
@@ -74,8 +70,7 @@ class DocumentOut(BaseModel):
     content_type: str
     path: str
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 class DocumentOut(BaseModel):
     id: int
@@ -84,8 +79,7 @@ class DocumentOut(BaseModel):
     path: str
     download_url: Optional[str] = None
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DocumentPreviewOut(BaseModel):
@@ -93,16 +87,15 @@ class DocumentPreviewOut(BaseModel):
     filename: str
     content_type: str
     preview_url: str
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+
+    model_config = ConfigDict(from_attributes=True)
 
 class PatientOut(BaseModel):
     id: int
     name: str
     email: str
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 class AppointmentWithDocsOut(BaseModel):
     id: int
@@ -110,16 +103,16 @@ class AppointmentWithDocsOut(BaseModel):
     patient: PatientOut   
     documents: List[DocumentOut] = []
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+
+    model_config = ConfigDict(from_attributes=True)
 
 class PatientOut(BaseModel):
     id: int
     name: str
     email: str
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+
+    model_config = ConfigDict(from_attributes=True)
 
 class PrescriptionCreate(BaseModel):
     patient_id: int
@@ -135,8 +128,7 @@ class PrescriptionOut(BaseModel):
     medicines: str
     created_at: datetime
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReviewCreate(BaseModel):
@@ -149,8 +141,8 @@ class ReviewOut(BaseModel):
     comment: Optional[str]
     created_at: datetime
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+
+    model_config = ConfigDict(from_attributes=True)
 
 class MedicineBase(BaseModel):
     name: str
@@ -168,8 +160,8 @@ class MedicineUpdate(BaseModel):
 class MedicineOut(MedicineBase):
     id: int
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BillingItemCreate(BaseModel):

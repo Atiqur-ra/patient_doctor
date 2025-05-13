@@ -15,6 +15,7 @@ pytest
 httpx 
 pytest-asyncio
 PyPDF2
+pypdf
 pinecone
 python-dotenv
 google-generativeai
