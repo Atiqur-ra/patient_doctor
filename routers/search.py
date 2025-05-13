@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models.user_model import User
@@ -6,6 +6,7 @@ from models.appointment_model import DoctorAvailability
 from schemas import AvailabilityWithDoctorInfo
 from typing import List
 from models.reviews_model import Review
+from auth import get_current_user
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
@@ -13,8 +14,12 @@ router = APIRouter(prefix="/search", tags=["Search"])
 def search_doctors(
     name: str = Query(None),
     department: str = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
+    
+    if current_user.role != "patient":
+        raise HTTPException(status_code=403, detail="Only patients can access this endpoint")
     query = db.query(User).filter(User.role == "doctor")
     
     if name:
@@ -35,7 +40,6 @@ def search_doctors(
     for a in availabilities:
         doctor = next((doc for doc in doctors if doc.id == a.doctor_id), None)
 
-        # Calculate average rating from Review table
         review_query = db.query(Review).filter(Review.doctor_id == a.doctor_id).all()
         avg_rating = None
         if review_query:

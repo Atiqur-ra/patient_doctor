@@ -18,11 +18,13 @@ def upload_patient_doc_to_pinecone(
     current_user: User = Depends(get_current_doctor),
     db: Session = Depends(get_db)
 ):
-    # Validate input
+    if current_user.role != "doctor":
+        raise HTTPException(status_code=403, detail="Only doctors can access this")
+
     if not patient_id and not patient_name:
         raise HTTPException(status_code=400, detail="Provide either patient_id or patient_name")
 
-    # Fetch patient
+ 
     query = db.query(User)
     if patient_id:
         query = query.filter(User.id == patient_id)
@@ -34,7 +36,7 @@ def upload_patient_doc_to_pinecone(
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
-    # Get latest uploaded document for the patient (via appointments)
+
     document = (
         db.query(Document)
         .join(Appointment)
@@ -49,7 +51,6 @@ def upload_patient_doc_to_pinecone(
     if not os.path.exists(document.path):
         raise HTTPException(status_code=404, detail="Document file not found on disk")
 
-    # Call document indexing function
     with open(document.path, "rb") as uploaded_file:
         handle_document_upload(
             uploaded_file=uploaded_file,
@@ -69,7 +70,9 @@ def query_patient_document(
     current_user: User = Depends(get_current_doctor)
 ):
     try:
-        # Determine patient ID
+        if current_user.role != "doctor":
+            raise HTTPException(status_code=403, detail="Only doctors can access this")
+
         if patient_identifier.isdigit():
             patient_id = int(patient_identifier)
         else:
@@ -78,12 +81,11 @@ def query_patient_document(
                 raise HTTPException(status_code=404, detail="Patient not found")
             patient_id = patient.id
 
-        # Fetch patient object regardless of path
+
         user = db.query(User).filter(User.id == patient_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="Patient not found")
 
-        # Use patient name as chat_name
         answer = handle_document_query(chat_name=str(user.name), question=question)
 
         return {"answer": answer}

@@ -20,8 +20,7 @@ pinecone
 python-dotenv
 google-generativeai
 langchain
-langchain-google-genai
-profanity-check
+langchain-google-genaik
 langchain-community
 sentence-transformers
 langchain_huggingface

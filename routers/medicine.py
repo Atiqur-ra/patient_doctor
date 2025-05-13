@@ -32,7 +32,7 @@ def create_medicine(medicine: MedicineCreate, db: Session = Depends(get_db), cur
     return db_medicine
 
 @router.get("/", response_model=List[MedicineOut])
-def list_medicines(db: Session = Depends(get_db)):
+def list_medicines(db: Session = Depends(get_db), current_user = Depends(get_current_pharmacy_user)):
     return db.query(Medicine).all()
 
 @router.put("/{medicine_id}", response_model=MedicineOut)
@@ -79,7 +79,7 @@ def get_prescriptions_for_patient(
     return prescriptions
 
 
-# routers/medicine.py
+
 
 @router.post("/create-bill", response_model=dict)
 def create_bill(
@@ -187,13 +187,13 @@ def upload_medicine_image(
     contents = file.file.read()
     text = extract_text_from_image(contents)
 
-    # Optional: save file to disk
+
     save_path = f"uploads/medicine_images/{file.filename}"
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     with open(save_path, "wb") as f:
         f.write(contents)
 
-    # Save to database
+
     image_record = MedicineImage(
         filename=file.filename,
         extracted_text=text,

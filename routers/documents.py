@@ -18,7 +18,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
 
-@router.get("/patient-documents/preview")
+@router.get("/patient-documents/preview-doctor")
 def preview_patient_document(
     patient_id: int = Query(..., description="Patient ID"),
     current_user: User = Depends(get_current_user),
@@ -27,7 +27,6 @@ def preview_patient_document(
     if current_user.role != "doctor":
         raise HTTPException(status_code=403, detail="Only doctors can access this")
 
-    # Get latest appointment between this doctor and patient
     document = (
         db.query(Document)
         .join(Document.appointment)
@@ -73,12 +72,12 @@ def view_document(document_id: int, db: Session = Depends(get_db), current_user:
         filename=document.filename
     )
 
-@router.get("/patient-view-documents", response_model=List[DocumentOut])
+@router.get("/patient-documents/preview-patient", response_model=List[DocumentOut])
 def preview_latest_patient_document(
     current_user=Depends(get_current_patient),
     db: Session = Depends(get_db)
 ):
-    # Get the latest document uploaded by this patient
+    
     document = (
         db.query(Document)
         .filter(Document.uploaded_by_id == current_user.id)

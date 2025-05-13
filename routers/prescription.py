@@ -10,7 +10,7 @@ from typing import List
 from auth import get_current_patient
 
 
-router = APIRouter()
+router = APIRouter(prefix="/api", tags=["Prescriptions"])
 
 @router.post("/prescriptions/", response_model=PrescriptionOut)
 def create_prescription(prescription: PrescriptionCreate, db: Session = Depends(get_db), current_doctor: User = Depends(get_current_doctor)):
@@ -34,7 +34,7 @@ def create_prescription(prescription: PrescriptionCreate, db: Session = Depends(
     db.refresh(new_prescription)
     return new_prescription
 
-@router.get("/prescriptions/", response_model=List[PrescriptionOut])
+@router.get("/prescriptions-patient/", response_model=List[PrescriptionOut])
 def get_prescriptions_for_patient(db: Session = Depends(get_db), current_user: User = Depends(get_current_patient)):
     return db.query(Prescription).filter_by(patient_id=current_user.id).all()
 

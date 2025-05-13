@@ -24,14 +24,13 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 def book_appointment(
     doctor_id: int = Form(...),
     scheduled_time: datetime = Form(...),
-    file: UploadFile = File(None),
+    files: List[UploadFile] = File([]),
     current_user: User = Depends(get_current_patient),
     db: Session = Depends(get_db)
 ):
-     # Extract date from datetime
+
     appointment_date = scheduled_time.date()
 
-    # Count existing appointments for this doctor on the same date
     count = db.query(Appointment).filter(
         Appointment.doctor_id == doctor_id,
         func.date(Appointment.appointment_time) == appointment_date
@@ -50,7 +49,9 @@ def book_appointment(
     db.commit()
     db.refresh(appointment)
 
-    if file:
+    document_paths = []
+
+    for file in files:
         ext = file.filename.split(".")[-1]
         unique_name = f"{uuid4()}.{ext}"
         path = os.path.join(UPLOAD_DIR, unique_name)
@@ -68,6 +69,8 @@ def book_appointment(
         db.add(document)
         db.commit()
 
+        document_paths.append(path)
+
     return appointment
 
 
@@ -79,8 +82,7 @@ def view_appointments_for_doctor(
     current_doctor: User = Depends(get_current_doctor)
 ):
     appointments = db.query(Appointment).filter(Appointment.doctor_id == current_doctor.id).all()
-    
-    # Inject download URL into each document
+
     for appointment in appointments:
         for doc in appointment.documents:
             doc.download_url = f"{request.base_url}documents/download/{doc.id}"
