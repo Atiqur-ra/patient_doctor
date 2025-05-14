@@ -4,6 +4,7 @@ from database import get_db
 from models.user_model import User
 from models.appointment_model import Appointment
 from schemas import  AppointmentOut,AppointmentWithDocsOut
+from models.appointment_model import AppointmentSlot
 from datetime import datetime
 import os
 from models.documents_model import Document
@@ -12,7 +13,7 @@ from fastapi import File, UploadFile, Form
 from auth import get_current_patient, get_current_doctor
 from typing import List
 from fastapi import Request
-from sqlalchemy import func
+from schemas import DocumentOut, PatientOut
 
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
 
@@ -20,58 +21,62 @@ UPLOAD_DIR = "uploaded_documents"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+
 @router.post("/book/", response_model=AppointmentOut)
 def book_appointment(
-    doctor_id: int = Form(...),
-    scheduled_time: datetime = Form(...),
+    slot_id: int = Form(...),
     files: List[UploadFile] = File([]),
     current_user: User = Depends(get_current_patient),
     db: Session = Depends(get_db)
 ):
+    # Step 1: Check if slot is available
+    slot = db.query(AppointmentSlot).filter(AppointmentSlot.id == slot_id).first()
 
-    appointment_date = scheduled_time.date()
+    if not slot or slot.status == "booked":
+        raise HTTPException(status_code=400, detail="This time slot is already booked or invalid")
 
-    count = db.query(Appointment).filter(
-        Appointment.doctor_id == doctor_id,
-        func.date(Appointment.appointment_time) == appointment_date
-    ).count()
+    availability = slot.availability  # slot.availability is a relationship to DoctorAvailability
+    doctor_id = availability.doctor_id
+    appointment_time = datetime.combine(availability.date, slot.slot_time)
 
-    if count >= 20:
-        raise HTTPException(status_code=400, detail="Booking limit for this doctor on this date is full")
-
-
+    # Step 2: Create the appointment
     appointment = Appointment(
         doctor_id=doctor_id,
         patient_id=current_user.id,
-        appointment_time=scheduled_time
+        appointment_time=appointment_time
     )
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
 
-    document_paths = []
+    # Step 3: Mark the slot as booked
+    slot.status = "booked"
+    slot.appointment_id = appointment.id
+    db.commit()
 
+    # Step 4: Handle multiple document uploads
     for file in files:
-        ext = file.filename.split(".")[-1]
-        unique_name = f"{uuid4()}.{ext}"
-        path = os.path.join(UPLOAD_DIR, unique_name)
+        if file.filename:
+            ext = file.filename.split(".")[-1]
+            unique_name = f"{uuid4()}.{ext}"
+            path = os.path.join(UPLOAD_DIR, unique_name)
 
-        with open(path, "wb") as buffer:
-            buffer.write(file.file.read())
+            with open(path, "wb") as buffer:
+                buffer.write(file.file.read())
 
-        document = Document(
-            filename=file.filename,
-            content_type=file.content_type,
-            path=path,
-            uploaded_by_id=current_user.id,
-            appointment_id=appointment.id
-        )
-        db.add(document)
-        db.commit()
+            document = Document(
+                filename=file.filename,
+                content_type=file.content_type,
+                path=path,
+                uploaded_by_id=current_user.id,
+                appointment_id=appointment.id
+            )
+            db.add(document)
 
-        document_paths.append(path)
+    db.commit()
 
     return appointment
+
 
 
 
@@ -81,11 +86,38 @@ def view_appointments_for_doctor(
     db: Session = Depends(get_db),
     current_doctor: User = Depends(get_current_doctor)
 ):
-    appointments = db.query(Appointment).filter(Appointment.doctor_id == current_doctor.id).all()
+    appointments = (
+        db.query(Appointment)
+        .filter(Appointment.doctor_id == current_doctor.id)
+        .all()
+    )
+
+    response = []
 
     for appointment in appointments:
-        for doc in appointment.documents:
-            doc.download_url = f"{request.base_url}documents/download/{doc.id}"
+        patient = appointment.patient
 
-    return appointments
+        documents_out = [
+            DocumentOut(
+                id=doc.id,
+                filename=doc.filename,
+                content_type=doc.content_type,
+                document_id=f"{doc.id}"
+            )
+            for doc in appointment.documents
+        ]
+
+        response.append(AppointmentWithDocsOut(
+            id=appointment.id,
+            appointment_time=appointment.appointment_time,
+            patient=PatientOut(
+                id=patient.id,
+                name=patient.name,
+                email=patient.email
+            ),
+            documents=documents_out
+        ))
+
+    return response
+
 

@@ -4,25 +4,42 @@ from database import get_db
 from models.user_model import  User
 from models.appointment_model import DoctorAvailability
 from schemas import AvailabilityCreate, AvailabilityOut
-from utils.security import get_current_user
+from auth import get_current_doctor
+from models.appointment_model import AppointmentSlot
+from datetime import date, time, datetime
+from fastapi import Form
 
 router = APIRouter(prefix="/availability", tags=["Availability"])
 
-@router.post("/", response_model=AvailabilityOut)
+@router.post("/set_availabilit", response_model=AvailabilityOut)
 def set_availability(
-    data: AvailabilityCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    date: date = Form(...),
+    start_time: time = Form(...),
+    end_time: time = Form(...),
+    current_user: User = Depends(get_current_doctor),
+    db: Session = Depends(get_db)
 ):
-    if current_user.role != "doctor":
-        raise HTTPException(status_code=403, detail="Only doctors can set availability")
-
-    availability = DoctorAvailability(doctor_id=current_user.id, available_time=data.available_time)
+    availability = DoctorAvailability(
+        doctor_id=current_user.id,
+        date=date,
+        start_time=start_time,
+        end_time=end_time
+    )
     db.add(availability)
     db.commit()
     db.refresh(availability)
+
+    # Generate 10 equal time slots
+    start_dt = datetime.combine(date, start_time)
+    end_dt = datetime.combine(date, end_time)
+    total_duration = (end_dt - start_dt) / 10
+
+    for i in range(10):
+        slot_time = (start_dt + i * total_duration).time()
+        slot = AppointmentSlot(availability_id=availability.id, slot_time=slot_time)
+        db.add(slot)
+
+    db.commit()
     return availability
 
-@router.get("/", response_model=list[AvailabilityOut])
-def list_all_availability(db: Session = Depends(get_db)):
-    return db.query(DoctorAvailability).all()
+

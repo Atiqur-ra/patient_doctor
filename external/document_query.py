@@ -19,7 +19,7 @@ pc = Pinecone(
 
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-pipe = pipeline("text2text-generation", model="google/flan-t5-large", device="mps")
+pipe = pipeline("text2text-generation", model="google/flan-t5-large")
 
 def handle_document_query(chat_name: str, question: str):
     try:

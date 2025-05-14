@@ -3,6 +3,10 @@ from enum import Enum
 from datetime import datetime
 from typing import List, Optional
 from models.user_model import UserRole
+from datetime import time, date
+
+
+
 class RoleEnum(str, Enum):
     patient = "patient"
     doctor = "doctor"
@@ -51,16 +55,27 @@ class AvailabilityCreate(BaseModel):
 class AvailabilityOut(BaseModel):
     id: int
     doctor_id: int
-    available_time: datetime
+    date: date
+    start_time: time
+    end_time: time
 
     model_config = ConfigDict(from_attributes=True)
 
+class SlotInfo(BaseModel):
+    slot_id: int
+    slot_time: time
+    status: str
+
 class AvailabilityWithDoctorInfo(BaseModel):
-    id: int
+    availability_id: int
     doctor_id: int
-    available_time: datetime
     doctor_name: str
-    doctor_rating: Optional[float]
+    doctor_department: str
+    date: date
+    start_time: time
+    end_time: time
+    average_rating: Optional[float]
+    slots: List[SlotInfo]
 
     model_config = ConfigDict(from_attributes=True)      
 
@@ -68,18 +83,11 @@ class DocumentOut(BaseModel):
     id: int
     filename: str
     content_type: str
-    path: str
+    document_id: str
 
     model_config = ConfigDict(from_attributes=True)
 
-class DocumentOut(BaseModel):
-    id: int
-    filename: str
-    content_type: str
-    path: str
-    download_url: Optional[str] = None
 
-    model_config = ConfigDict(from_attributes=True)
 
 
 class DocumentPreviewOut(BaseModel):
@@ -106,13 +114,6 @@ class AppointmentWithDocsOut(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class PatientOut(BaseModel):
-    id: int
-    name: str
-    email: str
-
-
-    model_config = ConfigDict(from_attributes=True)
 
 class PrescriptionCreate(BaseModel):
     patient_id: int

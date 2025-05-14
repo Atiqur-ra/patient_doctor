@@ -3,25 +3,26 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.user_model import User
 from models.appointment_model import DoctorAvailability
-from schemas import AvailabilityWithDoctorInfo
+from schemas import AvailabilityWithDoctorInfo, SlotInfo
 from typing import List
 from models.reviews_model import Review
 from auth import get_current_user
+from models.appointment_model import AppointmentSlot
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
-@router.get("/doctors/", response_model=List[AvailabilityWithDoctorInfo])
+@router.get("/search-doctors", response_model=List[AvailabilityWithDoctorInfo])
 def search_doctors(
     name: str = Query(None),
     department: str = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    
     if current_user.role != "patient":
         raise HTTPException(status_code=403, detail="Only patients can access this endpoint")
+
+    # Step 1: Filter doctors
     query = db.query(User).filter(User.role == "doctor")
-    
     if name:
         query = query.filter(User.name.ilike(f"%{name}%"))
     if department:
@@ -30,6 +31,7 @@ def search_doctors(
     doctors = query.all()
     doctor_ids = [doc.id for doc in doctors]
 
+    # Step 2: Fetch their availabilities
     availabilities = (
         db.query(DoctorAvailability)
         .filter(DoctorAvailability.doctor_id.in_(doctor_ids))
@@ -37,22 +39,42 @@ def search_doctors(
     )
 
     result = []
-    for a in availabilities:
-        doctor = next((doc for doc in doctors if doc.id == a.doctor_id), None)
 
-        review_query = db.query(Review).filter(Review.doctor_id == a.doctor_id).all()
-        avg_rating = None
-        if review_query:
-            total = sum([r.rating for r in review_query])
-            avg_rating = round(total / len(review_query), 2)
+    for availability in availabilities:
+        doctor = next((doc for doc in doctors if doc.id == availability.doctor_id), None)
+
+        # Step 3: Get reviews
+        reviews = db.query(Review).filter(Review.doctor_id == availability.doctor_id).all()
+        avg_rating = round(sum([r.rating for r in reviews]) / len(reviews), 2) if reviews else None
+
+        # Step 4: Fetch slots for this availability
+        slots = (
+            db.query(AppointmentSlot)
+            .filter(AppointmentSlot.availability_id == availability.id)
+            .order_by(AppointmentSlot.slot_time)
+            .all()
+        )
+
+        slot_out = [
+            SlotInfo(
+            slot_id=slot.id,
+            slot_time=slot.slot_time,
+            status=slot.status
+            )
+        for slot in slots
+        ]
 
         result.append(AvailabilityWithDoctorInfo(
-            id=a.id,
-            doctor_id=a.doctor_id,
-            available_time=a.available_time,
-            doctor_name=doctor.name if doctor else "Unknown",
-            doctor_rating=avg_rating
-        ))
+            availability_id=availability.id,
+            doctor_id=availability.doctor_id,
+            doctor_name=doctor.name,
+            doctor_department=doctor.department,
+            date=availability.date,
+            start_time=availability.start_time,
+            end_time=availability.end_time,
+            average_rating=avg_rating,
+            slots=slot_out
+            ))
+            
 
     return result
-
