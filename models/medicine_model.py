@@ -94,3 +94,27 @@ class MedicineImage(Base):
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", foreign_keys=[uploaded_by])
+
+
+class PatientPurchase(Base):
+    __tablename__ = "patient_purchases"
+
+    id = Column(Integer, primary_key=True)
+    patient_id = Column(Integer, ForeignKey("users.id"))
+    total_amount = Column(Float)
+    purchased_at = Column(DateTime, default=datetime.utcnow)
+
+    items = relationship("PurchaseItem", back_populates="purchase")
+
+
+class PurchaseItem(Base):
+    __tablename__ = "purchase_items"
+
+    id = Column(Integer, primary_key=True)
+    purchase_id = Column(Integer, ForeignKey("patient_purchases.id"))
+    medicine_id = Column(Integer, ForeignKey("medicines.id"))
+    quantity = Column(Integer)
+    price = Column(Float)
+
+    purchase = relationship("PatientPurchase", back_populates="items")
+    medicine = relationship("Medicine")

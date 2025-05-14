@@ -31,7 +31,6 @@ def create_prescription(prescription: PrescriptionCreate, db: Session = Depends(
     )
     db.add(new_prescription)
     db.commit()
-    db.refresh(new_prescription)
     return new_prescription
 
 @router.get("/prescriptions-patient/", response_model=List[PrescriptionOut])

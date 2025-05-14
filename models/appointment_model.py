@@ -37,7 +37,7 @@ class AppointmentSlot(Base):
     id = Column(Integer, primary_key=True, index=True)
     availability_id = Column(Integer, ForeignKey("doctor_availabilities.id"))
     slot_time = Column(Time, nullable=False)
-    status = Column(String, default="scheduled")  # scheduled or booked
+    status = Column(String, default="available")
     appointment_id = Column(Integer, ForeignKey("appointments.id"), nullable=True)
 
     availability = relationship("DoctorAvailability", back_populates="slots")

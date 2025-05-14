@@ -1,25 +1,27 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models.medicine_model import Medicine
+from models.medicine_model import Medicine,PatientPurchase,PurchaseItem
 from schemas import MedicineCreate, MedicineUpdate, MedicineOut
 from auth import get_current_pharmacy_user
 from typing import List
 from fastapi import Query
 from models.prescription_model import Prescription
-from auth import get_current_user
+from auth import get_current_user, get_current_patient
 from models.user_model import User
 from typing import Optional
 from schemas import BillResponse
 from schemas import BillCreate
 from schemas import BillMedicineItem
+from schemas import PurchaseRequest
 from models.medicine_model import Billing
 from models.medicine_model import BillingItem
 from models.medicine_model import MedicineImage
 from external.ocr import extract_text_from_image
 import os
-from fastapi import UploadFile, File
-
+from fastapi import UploadFile, File, Form
+from typing import Dict, Any
+from schemas import PurchaseRequest
 
 router = APIRouter(prefix="/medicines", tags=["Medicines"])
 
@@ -43,7 +45,6 @@ def update_medicine(medicine_id: int, update: MedicineUpdate, db: Session = Depe
     medicine.quantity = update.quantity
     medicine.price = update.price
     db.commit()
-    db.refresh(medicine)
     return medicine
 
 @router.delete("/{medicine_id}")
@@ -54,6 +55,7 @@ def delete_medicine(medicine_id: int, db: Session = Depends(get_db), current_use
     db.delete(medicine)
     db.commit()
     return {"message": "Medicine deleted"}
+
 
 
 @router.get("/pharmacy/prescriptions")
@@ -123,7 +125,7 @@ def create_bill(
 
     db.add(billing)
     db.commit()
-    db.refresh(billing)
+  
 
     return {
         "message": "Billing completed",
@@ -132,7 +134,7 @@ def create_bill(
         "billed_by": current_user.name
     }
 
-@router.get("/pharmacy/dispense", response_model=BillResponse)
+@router.get("/pharmacy/dispense")
 def get_bill_by_patient(
     patient_id: Optional[int] = Query(None),
     patient_name: Optional[str] = Query(None),
@@ -175,6 +177,67 @@ def get_bill_by_patient(
         total_amount=billing.total_price
     )
 
+@router.get("/search/medicine/patient")
+def medicine_search_patient(
+    db: Session = Depends(get_db),
+    medicine_name: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "patient":
+        raise HTTPException(status_code=403, detail="Only patients can access this")
+    if not medicine_name:
+        medicines = db.query(Medicine).all()
+    else:
+        medicines = db.query(Medicine).filter(Medicine.name.ilike(f"%{medicine_name}%")).all()
+    if not medicines:
+        raise HTTPException(status_code=404, detail="No medicines found")
+    
+    return medicines
+
+
+@router.post("/patient/buy_medicine", response_model=Dict[str, Any])
+def buy_medicines(
+    request: PurchaseRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_patient),
+    
+):
+    if not request.medicines or request.patient_id is None:
+        raise HTTPException(status_code=400, detail="Medicines and patient ID are required")
+
+    total_cost = 0
+    purchase_items = []
+
+    for item in request.medicines:
+        med = db.query(Medicine).filter(Medicine.id == item.medicine_id).first()
+        if not med:
+            raise HTTPException(status_code=404, detail=f"Medicine ID {item.medicine_id} not found")
+        if med.quantity < item.quantity:
+            raise HTTPException(status_code=400, detail=f"Insufficient stock for {med.name}")
+
+    
+        med.quantity -= item.quantity
+        cost = med.price * item.quantity
+        total_cost += cost
+
+        purchase_items.append(PurchaseItem(
+            medicine_id=med.id,
+            quantity=item.quantity,
+            price=cost
+        ))
+
+    purchase = PatientPurchase(
+        patient_id=current_user.id,
+        total_amount=total_cost,
+        items=purchase_items
+    )
+
+    db.add(purchase)
+    db.commit()
+
+    return {"message": "Medicines purchased successfully", "total_amount": total_cost}
+
+
 @router.post("/upload-medicine-image")
 def upload_medicine_image(
     file: UploadFile = File(...),
@@ -201,7 +264,7 @@ def upload_medicine_image(
     )
     db.add(image_record)
     db.commit()
-    db.refresh(image_record)
+
 
     return {
         "message": "Image uploaded and text extracted successfully",

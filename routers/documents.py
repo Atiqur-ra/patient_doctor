@@ -78,12 +78,9 @@ def view_document(document_id: int, db: Session = Depends(get_db), current_user:
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    # Only the doctor who has appointment with this patient can see it
-    if current_user.role == "doctor":
-        if document.appointment.doctor_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Unauthorized")
-    else:
-        raise HTTPException(status_code=403, detail="Only doctors can view documents")
+    if document.appointment.doctor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
 
     return FileResponse(
         path=document.path,
@@ -93,7 +90,6 @@ def view_document(document_id: int, db: Session = Depends(get_db), current_user:
 
 @router.get("/patient-documents/preview-patient", response_model=List[DocumentOut])
 def preview_patient_documents(
-    patient_id: int = Query(..., description="Patient ID"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -119,7 +115,7 @@ def preview_patient_documents(
             id=doc.id,
             filename=doc.filename,
             content_type=doc.content_type,
-            download_url=f"{doc.id}"
+            document_id=f"{doc.id}"
         )
         for doc in documents
     ]
@@ -152,12 +148,12 @@ def view_document(document_id: int, db: Session = Depends(get_db), current_user:
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    # Only the doctor who has appointment with this patient can see it
-    if current_user.role == "doctor":
-        if document.appointment.doctor_id != current_user.id:
+
+    if current_user.role == "patient":
+        if document.appointment.patient_id != current_user.id:
             raise HTTPException(status_code=403, detail="Unauthorized")
     else:
-        raise HTTPException(status_code=403, detail="Only doctors can view documents")
+        raise HTTPException(status_code=403, detail="Only patient can view documents")
 
     return FileResponse(
         path=document.path,

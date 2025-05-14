@@ -33,6 +33,5 @@ def create_review(
     )
     db.add(new_review)
     db.commit()
-    db.refresh(new_review)
     return new_review
 

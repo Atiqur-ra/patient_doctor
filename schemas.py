@@ -193,3 +193,12 @@ class UserUpdate(BaseModel):
     name: Optional[str]
     email: Optional[str]
     role: Optional[UserRole]
+
+
+class MedicinePurchase(BaseModel):
+    medicine_id: int
+    quantity: int
+
+class PurchaseRequest(BaseModel):
+    patient_id: int
+    medicines: List[MedicinePurchase]

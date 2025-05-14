@@ -11,7 +11,7 @@ from fastapi import Form
 
 router = APIRouter(prefix="/availability", tags=["Availability"])
 
-@router.post("/set_availabilit", response_model=AvailabilityOut)
+@router.post("/set_availability", response_model=AvailabilityOut)
 def set_availability(
     date: date = Form(...),
     start_time: time = Form(...),
@@ -27,7 +27,6 @@ def set_availability(
     )
     db.add(availability)
     db.commit()
-    db.refresh(availability)
 
     # Generate 10 equal time slots
     start_dt = datetime.combine(date, start_time)
