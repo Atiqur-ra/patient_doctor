@@ -38,6 +38,7 @@ def book_appointment(
             AppointmentSlot.status == "available",
             DoctorAvailability.id == AppointmentSlot.availability_id,
             DoctorAvailability.doctor_id == doctor_id,
+            DoctorAvailability.date >= datetime.now().date()
             
         )
         .first()
