@@ -4,12 +4,11 @@ from routers import user, appointment, availability,search, documents, prescript
 from routers import admin
 from routers import document_rag
 from sqlalchemy.orm import configure_mappers
-from models import * 
-configure_mappers()
+
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(title="Online Patient Doctor Management System",)
 
 app.include_router(user.router)
 app.include_router(admin.router)

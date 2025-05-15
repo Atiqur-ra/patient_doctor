@@ -6,7 +6,7 @@ from models.appointment_model import DoctorAvailability
 from schemas import AvailabilityWithDoctorInfo, SlotInfo
 from typing import List
 from models.reviews_model import Review
-from auth import get_current_user
+from auth import get_current_patient
 from models.appointment_model import AppointmentSlot
 
 router = APIRouter(prefix="/search", tags=["Search"])
@@ -16,12 +16,10 @@ def search_doctors(
     name: str = Query(None),
     department: str = Query(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_patient)
 ):
-    if current_user.role != "patient":
-        raise HTTPException(status_code=403, detail="Only patients can access this endpoint")
 
-    # Step 1: Filter doctors
+
     query = db.query(User).filter(User.role == "doctor")
     if name:
         query = query.filter(User.name.ilike(f"%{name}%"))
@@ -31,7 +29,7 @@ def search_doctors(
     doctors = query.all()
     doctor_ids = [doc.id for doc in doctors]
 
-    # Step 2: Fetch their availabilities
+
     availabilities = (
         db.query(DoctorAvailability)
         .filter(DoctorAvailability.doctor_id.in_(doctor_ids))
@@ -43,11 +41,10 @@ def search_doctors(
     for availability in availabilities:
         doctor = next((doc for doc in doctors if doc.id == availability.doctor_id), None)
 
-        # Step 3: Get reviews
+     
         reviews = db.query(Review).filter(Review.doctor_id == availability.doctor_id).all()
         avg_rating = round(sum([r.rating for r in reviews]) / len(reviews), 2) if reviews else None
 
-        # Step 4: Fetch slots for this availability
         slots = (
             db.query(AppointmentSlot)
             .filter(AppointmentSlot.availability_id == availability.id)

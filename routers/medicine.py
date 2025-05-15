@@ -7,7 +7,7 @@ from auth import get_current_pharmacy_user
 from typing import List
 from fastapi import Query
 from models.prescription_model import Prescription
-from auth import get_current_user, get_current_patient
+from auth import get_current_patient
 from models.user_model import User
 from typing import Optional
 from schemas import BillResponse
@@ -19,7 +19,7 @@ from models.medicine_model import BillingItem
 from models.medicine_model import MedicineImage
 from external.ocr import extract_text_from_image
 import os
-from fastapi import UploadFile, File, Form
+from fastapi import UploadFile, File
 from typing import Dict, Any
 from schemas import PurchaseRequest
 
@@ -62,12 +62,9 @@ def delete_medicine(medicine_id: int, db: Session = Depends(get_db), current_use
 def get_prescriptions_for_patient(
     patient_id: Optional[int] = Query(None),
     patient_name: Optional[str] = Query(None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_pharmacy_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role != "pharmacy":
-        raise HTTPException(status_code=403, detail="Only pharmacy staff can access this")
-
     query = db.query(Prescription).join(User, Prescription.patient_id == User.id)
 
     if patient_id:
@@ -86,11 +83,9 @@ def get_prescriptions_for_patient(
 @router.post("/create-bill", response_model=dict)
 def create_bill(
     bill: BillCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_pharmacy_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role != "pharmacy":
-        raise HTTPException(status_code=403, detail="Only pharmacy staff can create bills")
 
     patient = db.query(User).filter(User.id == bill.patient_id, User.role == "patient").first()
     if not patient:
@@ -118,7 +113,7 @@ def create_bill(
 
     billing = Billing(
         patient_id=bill.patient_id,
-        pharmacy_staff_id=current_user.id,
+        pharmacy_staff_id=current_user['id'],
         total_price=total_price,
         items=billing_items
     )
@@ -131,7 +126,7 @@ def create_bill(
         "message": "Billing completed",
         "patient_name": patient.name,
         "total_price": total_price,
-        "billed_by": current_user.name
+        "billed_by": current_user['name']
     }
 
 @router.get("/pharmacy/dispense")
@@ -139,10 +134,8 @@ def get_bill_by_patient(
     patient_id: Optional[int] = Query(None),
     patient_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_pharmacy_user)
 ):
-    if current_user.role != "pharmacy":
-        raise HTTPException(status_code=403, detail="Only pharmacy staff can access this")
 
     if not patient_id and not patient_name:
         raise HTTPException(status_code=400, detail="Provide patient_id or patient_name")
@@ -181,10 +174,9 @@ def get_bill_by_patient(
 def medicine_search_patient(
     db: Session = Depends(get_db),
     medicine_name: Optional[str] = None,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_patient)
 ):
-    if current_user.role != "patient":
-        raise HTTPException(status_code=403, detail="Only patients can access this")
+   
     if not medicine_name:
         medicines = db.query(Medicine).all()
     else:
@@ -227,7 +219,7 @@ def buy_medicines(
         ))
 
     purchase = PatientPurchase(
-        patient_id=current_user.id,
+        patient_id=current_user['id'],
         total_amount=total_cost,
         items=purchase_items
     )
@@ -242,11 +234,8 @@ def buy_medicines(
 def upload_medicine_image(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_pharmacy_user)
 ):
-    if current_user.role != "pharmacy":
-        raise HTTPException(status_code=403, detail="Only pharmacy staff can upload medicine images")
-
     contents = file.file.read()
     text = extract_text_from_image(contents)
 
@@ -260,7 +249,7 @@ def upload_medicine_image(
     image_record = MedicineImage(
         filename=file.filename,
         extracted_text=text,
-        uploaded_by=current_user.id
+        uploaded_by=current_user['id']
     )
     db.add(image_record)
     db.commit()

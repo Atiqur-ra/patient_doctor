@@ -20,7 +20,7 @@ def set_availability(
     db: Session = Depends(get_db)
 ):
     availability = DoctorAvailability(
-        doctor_id=current_user.id,
+        doctor_id=current_user['id'],
         date=date,
         start_time=start_time,
         end_time=end_time

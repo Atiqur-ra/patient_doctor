@@ -17,7 +17,7 @@ def create_review(
     current_user: User = Depends(get_current_patient),
 ):
     appointment = db.query(Appointment).filter_by(
-        id=review.appointment_id, patient_id=current_user.id
+        id=review.appointment_id, patient_id=current_user['id']
     ).first()
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found or unauthorized")
@@ -26,7 +26,7 @@ def create_review(
 
     new_review = Review(
         doctor_id=appointment.doctor_id,
-        patient_id=current_user.id,
+        patient_id=current_user['id'],
         appointment_id=appointment.id,
         rating=rating,
         comment=review.comment

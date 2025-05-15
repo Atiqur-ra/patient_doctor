@@ -18,9 +18,6 @@ def upload_patient_doc_to_pinecone(
     current_user: User = Depends(get_current_doctor),
     db: Session = Depends(get_db)
 ):
-    if current_user.role != "doctor":
-        raise HTTPException(status_code=403, detail="Only doctors can access this")
-
     if not patient_id and not patient_name:
         raise HTTPException(status_code=400, detail="Provide either patient_id or patient_name")
 
@@ -70,8 +67,6 @@ def query_patient_document(
     current_user: User = Depends(get_current_doctor)
 ):
     try:
-        if current_user.role != "doctor":
-            raise HTTPException(status_code=403, detail="Only doctors can access this")
 
         if patient_identifier.isdigit():
             patient_id = int(patient_identifier)

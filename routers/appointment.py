@@ -22,7 +22,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 
-@router.post("/appointments/book", response_model=AppointmentOut)
+@router.post("/book", response_model=AppointmentOut)
 def book_appointment(
     doctor_id: int = Form(...),
     slot_id: int = Form(...),
@@ -30,7 +30,6 @@ def book_appointment(
     current_user: User = Depends(get_current_patient),
     db: Session = Depends(get_db)
 ):
-    # Step 1: Validate slot existence and availability for the given doctor
     slot = (
         db.query(AppointmentSlot)
         .join(AppointmentSlot.availability)
@@ -38,37 +37,42 @@ def book_appointment(
             AppointmentSlot.id == slot_id,
             AppointmentSlot.status == "available",
             DoctorAvailability.id == AppointmentSlot.availability_id,
-            DoctorAvailability.doctor_id == doctor_id
+            DoctorAvailability.doctor_id == doctor_id,
+            
         )
         .first()
     )
-
+  
     if not slot:
         raise HTTPException(
             status_code=400,
             detail="Invalid slot ID or this slot is not available for the selected doctor."
         )
+    
 
-    # Step 2: Prepare appointment time
     availability = slot.availability
     appointment_time = datetime.combine(availability.date, slot.slot_time)
+    if appointment_time < datetime.now():
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot book an appointment for a past date."
+        )
 
-    # Step 3: Create appointment
+
     appointment = Appointment(
         doctor_id=doctor_id,
-        patient_id=current_user.id,
+        patient_id=current_user['id'],
         appointment_time=appointment_time
     )
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
 
-    # Step 4: Mark slot as booked
+
     slot.status = "booked"
     slot.appointment_id = appointment.id
     db.commit()
 
-    # Step 5: Handle optional document uploads
     if files:
         for file in files:
             if file.filename:
@@ -83,7 +87,7 @@ def book_appointment(
                     filename=file.filename,
                     content_type=file.content_type,
                     path=path,
-                    uploaded_by_id=current_user.id,
+                    uploaded_by_id=current_user['id'],
                     appointment_id=appointment.id
                 )
                 db.add(document)
@@ -104,7 +108,7 @@ def view_appointments_for_doctor(
 ):
     appointments = (
         db.query(Appointment)
-        .filter(Appointment.doctor_id == current_doctor.id)
+        .filter(Appointment.doctor_id == current_doctor['id'])
         .all()
     )
 

@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api", tags=["Prescriptions"])
 def create_prescription(prescription: PrescriptionCreate, db: Session = Depends(get_db), current_doctor: User = Depends(get_current_doctor)):
     appointment = db.query(Appointment).filter(
         Appointment.patient_id == prescription.patient_id,
-        Appointment.doctor_id == current_doctor.id
+        Appointment.doctor_id == current_doctor['id'],
     ).first()
 
     if not appointment:
@@ -24,7 +24,7 @@ def create_prescription(prescription: PrescriptionCreate, db: Session = Depends(
 
     new_prescription = Prescription(
         appointment_id=appointment.id,
-        doctor_id=current_doctor.id,
+        doctor_id=current_doctor['id'],
         patient_id=prescription.patient_id,
         issue_details=prescription.issue_details,
         medicines=prescription.medicines
@@ -35,5 +35,5 @@ def create_prescription(prescription: PrescriptionCreate, db: Session = Depends(
 
 @router.get("/prescriptions-patient/", response_model=List[PrescriptionOut])
 def get_prescriptions_for_patient(db: Session = Depends(get_db), current_user: User = Depends(get_current_patient)):
-    return db.query(Prescription).filter_by(patient_id=current_user.id).all()
+    return db.query(Prescription).filter_by(patient_id=current_user['id']).all()
 
