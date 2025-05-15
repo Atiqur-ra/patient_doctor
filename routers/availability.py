@@ -28,7 +28,7 @@ def set_availability(
     db.add(availability)
     db.commit()
 
-    # Generate 10 equal time slots
+
     start_dt = datetime.combine(date, start_time)
     end_dt = datetime.combine(date, end_time)
     total_duration = (end_dt - start_dt) / 10
