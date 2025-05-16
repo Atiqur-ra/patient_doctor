@@ -4,8 +4,8 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models.user_model import User
-from utils.security import SECRET_KEY, ALGORITHM
 from schemas import TokenData
+from utils.security import decode_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -37,6 +37,25 @@ def get_db():
 #     return user
 
 
+# def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+#     credentials_exception = HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="Invalid credentials",
+#         headers={"WWW-Authenticate": "Bearer"},
+#     )
+
+#     try:
+#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+#         email: str = payload.get("sub")
+#         role: str = payload.get("role")
+#         id: str = payload.get("id")
+#         name: str = payload.get("name")
+#         if email is None or role is None or id is None or name is None:
+#             raise credentials_exception
+#         return {"email": email, "role": role, "id": id, "name": name} 
+#     except JWTError:
+#         raise credentials_exception
+
 def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -45,17 +64,18 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     )
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        role: str = payload.get("role")
-        id: str = payload.get("id")
-        name: str = payload.get("name")
+        payload = decode_access_token(token)
+        email = payload.get("sub")
+        role = payload.get("role")
+        id = payload.get("id")
+        name = payload.get("name")
+
         if email is None or role is None or id is None or name is None:
             raise credentials_exception
-        return {"email": email, "role": role, "id": id, "name": name} 
+        return {"email": email, "role": role, "id": id, "name": name}
+
     except JWTError:
         raise credentials_exception
-
 
 
 def get_current_patient(current_user: User = Depends(get_current_user)):
