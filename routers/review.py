@@ -10,6 +10,8 @@ from external import reviews_processing
 
 
 router = APIRouter(tags=["Reviews"])
+
+
 @router.post("/reviews/", response_model=ReviewOut)
 def create_review(
     review: ReviewCreate,
@@ -21,6 +23,7 @@ def create_review(
     ).first()
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found or unauthorized")
+    
     
     rating = reviews_processing.analyze_comment_with_gemini(review.comment)
 

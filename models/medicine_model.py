@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, ForeignKey, String, DateTime, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey
-
+from sqlalchemy.dialects.postgresql import JSON
 
 
 class Medicine(Base):
@@ -89,7 +89,7 @@ class MedicineImage(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String)
-    extracted_text = Column(Text)
+    extracted_text = Column(JSON, nullable=True)
     uploaded_by = Column(Integer, ForeignKey("users.id"))
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 

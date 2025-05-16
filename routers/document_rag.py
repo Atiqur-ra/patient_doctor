@@ -7,6 +7,9 @@ from auth import get_current_doctor
 import os
 from external.document_query import handle_document_query
 from fastapi import Form
+from better_profanity import profanity
+
+profanity.load_censor_words()
 
 router = APIRouter(prefix="/rag", tags=["DOCUMENT Query"])
 
@@ -67,6 +70,8 @@ def query_patient_document(
     current_user: User = Depends(get_current_doctor)
 ):
     try:
+        if profanity.contains_profanity(question):
+            return {'message': "Please ask a valid query"}
 
         if patient_identifier.isdigit():
             patient_id = int(patient_identifier)

@@ -202,3 +202,10 @@ class MedicinePurchase(BaseModel):
 class PurchaseRequest(BaseModel):
     patient_id: int
     medicines: List[MedicinePurchase]
+
+
+class MagicLinkRequest(BaseModel):
+    email: EmailStr
+
+class MagicLinkPayload(BaseModel):
+    magic_link: str 

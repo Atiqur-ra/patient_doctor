@@ -22,6 +22,8 @@ import os
 from fastapi import UploadFile, File
 from typing import Dict, Any
 from schemas import PurchaseRequest
+from external.ocr import extract_structured_prescription_info, prepare_for_db
+from uuid import uuid4
 
 router = APIRouter(prefix="/medicines", tags=["Medicines"])
 
@@ -131,27 +133,13 @@ def create_bill(
 
 @router.get("/pharmacy/dispense")
 def get_bill_by_patient(
-    patient_id: Optional[int] = Query(None),
-    patient_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_pharmacy_user)
+    current_user: User = Depends(get_current_patient)
 ):
 
-    if not patient_id and not patient_name:
-        raise HTTPException(status_code=400, detail="Provide patient_id or patient_name")
-
-    query = db.query(User).filter(User.role == "patient")
-    if patient_id:
-        query = query.filter(User.id == patient_id)
-    elif patient_name:
-        query = query.filter(User.name.ilike(f"%{patient_name}%"))
-
-    patient = query.first()
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
 
     billing = db.query(Billing)\
-                .filter(Billing.patient_id == patient.id)\
+                .filter(Billing.patient_id == current_user['id'])\
                 .order_by(Billing.created_at.desc())\
                 .first()
 
@@ -164,7 +152,7 @@ def get_bill_by_patient(
     ]
 
     return BillResponse(
-        patient_name=patient.name,
+        patient_name=current_user['name'],
         billed_by=billing.pharmacy_staff.name,
         medicines=medicines,
         total_amount=billing.total_price
@@ -234,16 +222,24 @@ def buy_medicines(
 def upload_medicine_image(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_pharmacy_user)
+    current_user: User = Depends(get_current_patient)
 ):
-    contents = file.file.read()
-    text = extract_text_from_image(contents)
+    UPLOAD_DIR = "uploads"  
+    os.makedirs(UPLOAD_DIR, exist_ok=True) 
+
+# Create a unique file name and save it
+    file_path = os.path.join(UPLOAD_DIR, f"{uuid4()}_{file.filename}")
+    with open(file_path, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    content = extract_structured_prescription_info(file_path)
+    text = prepare_for_db(content)
 
 
     save_path = f"uploads/medicine_images/{file.filename}"
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     with open(save_path, "wb") as f:
-        f.write(contents)
+        f.write(file.file.read())
 
 
     image_record = MedicineImage(
