@@ -20,7 +20,6 @@ import json
 from PIL import Image
 import google.generativeai as genai
 
-# Configure Gemini API
 GOOGLE_API_KEY = os.getenv("GEMNI_API")
 if not GOOGLE_API_KEY:
     raise EnvironmentError("GEMNI_API environment variable not set.")
@@ -85,7 +84,6 @@ def extract_structured_prescription_info(image_path: str) -> dict:
     result_text = query_gemini_with_image(image, prompt)
 
     if result_text:
-        # 🔥 Clean the response text to remove ```json ... ``` wrappers
         cleaned_text = result_text.strip()
         if cleaned_text.startswith("```json"):
             cleaned_text = cleaned_text.replace("```json", "").strip()
@@ -103,19 +101,30 @@ def extract_structured_prescription_info(image_path: str) -> dict:
 def prepare_for_db(data: dict) -> dict:
     """Transforms extracted data to be ready for DB storage."""
     return {
-        "patient_name": data.get("patient_name", "N/A"),
-        "doctor_name": data.get("doctor_name", "N/A"),
-        "date_of_birth": data.get("Birthdate", "N/A"),
-        "age": data.get("age", "N/A"),
+        "patient_name": data.get("patient_name", None),
+        "doctor_name": data.get("doctor_name", None),
+        "date_of_birth": data.get("Birthdate", None),
+        "age": data.get("age", None),
         "instructions": data.get("instructions", "N/A"),
         "medications": [
             {
-                "name": med.get("name", "N/A"),
-                "dosage": med.get("dosage", "N/A"),
-                "route": med.get("route", "N/A"),
-                "frequency": med.get("frequency", "N/A"),
-                "duration": med.get("duration", "N/A")
+                "name": med.get("name", None),
+                "dosage": med.get("dosage", None),
+                "route": med.get("route", None),
+                "frequency": med.get("frequency", None),
+                "duration": med.get("duration", None)
             }
             for med in data.get("medications", [])
         ]
     }
+
+
+# if __name__ == "__main__":
+#     # Example usages
+#     image_path = r"C:\\Users\\atiku\\Music\\patient_doctor\\uploads\\medicine_images\\perscription.jpg"
+#     structured_data = extract_structured_prescription_info(image_path)
+#     prepare_for_db(structured_data)
+#     # print(structured_data)
+#     print(structured_data.get("patient_name"))
+#     print(structured_data.get("doctor_name"))
+#     print(structured_data.get("medications"))

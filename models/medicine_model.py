@@ -88,8 +88,13 @@ class MedicineImage(Base):
     __tablename__ = "medicine_images"
 
     id = Column(Integer, primary_key=True, index=True)
+    patient_name= Column(String, nullable=True)
+    doctor_name = Column(String, nullable=True)
+    data_of_birth = Column(String, nullable=True)
+    age = Column(String, nullable=True)
+    instructions = Column(String, nullable=True)
+    medications = Column(JSON, nullable=True)
     filename = Column(String)
-    extracted_text = Column(JSON, nullable=True)
     uploaded_by = Column(Integer, ForeignKey("users.id"))
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 

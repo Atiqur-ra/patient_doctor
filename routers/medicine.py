@@ -19,11 +19,15 @@ from models.medicine_model import BillingItem
 from models.medicine_model import MedicineImage
 from external.ocr import extract_text_from_image
 import os
+import datetime
 from fastapi import UploadFile, File
 from typing import Dict, Any
 from schemas import PurchaseRequest
 from external.ocr import extract_structured_prescription_info, prepare_for_db
 from uuid import uuid4
+from fastapi import UploadFile, File, Depends
+from PIL import Image
+import io
 
 router = APIRouter(prefix="/medicines", tags=["Medicines"])
 
@@ -224,32 +228,48 @@ def upload_medicine_image(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_patient)
 ):
-    UPLOAD_DIR = "uploads"  
-    os.makedirs(UPLOAD_DIR, exist_ok=True) 
+    """Handles the uploading and processing of medicine prescription images."""
 
-# Create a unique file name and save it
+    UPLOAD_DIR = os.path.abspath("uploads")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    # Generate a unique filename and save the image
+    file_bytes = file.file.read()
     file_path = os.path.join(UPLOAD_DIR, f"{uuid4()}_{file.filename}")
-    with open(file_path, "wb") as buffer:
-        buffer.write(file.file.read())
 
+    try:
+        image = Image.open(io.BytesIO(file_bytes))
+        image.verify()
+    except Exception as e:
+        return {"error": "Invalid image format", "message": str(e)}
+
+    # Save the file safely
+    with open(file_path, "wb") as buffer:
+        buffer.write(file_bytes)
+
+    save_path = os.path.join(UPLOAD_DIR, "medicine_images", file.filename)
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    with open(save_path, "wb") as f:
+        f.write(file_bytes)
+
+    # Extract prescription data
     content = extract_structured_prescription_info(file_path)
     text = prepare_for_db(content)
 
-
-    save_path = f"uploads/medicine_images/{file.filename}"
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    with open(save_path, "wb") as f:
-        f.write(file.file.read())
-
-
+    # Store extracted information in the database
     image_record = MedicineImage(
+        patient_name=text["patient_name"],
+        doctor_name=text["doctor_name"],
+        data_of_birth=text["date_of_birth"],
+        age=text["age"],
+        instructions=text["instructions"],
+        medications=text["medications"],
         filename=file.filename,
-        extracted_text=text,
-        uploaded_by=current_user['id']
+        uploaded_by=current_user['id'],
+        uploaded_at=datetime.datetime.utcnow()
     )
     db.add(image_record)
     db.commit()
-
 
     return {
         "message": "Image uploaded and text extracted successfully",
