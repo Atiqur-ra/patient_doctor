@@ -1,19 +1,4 @@
 
-from PIL import Image
-import io
-import easyocr
-import google.generativeai as genai
-import os
-
-def extract_text_from_image(image_bytes: bytes) -> str:
-    reader = easyocr.Reader(['en'])
-    text = reader.readtext(image_bytes, detail=0)
-    return text
-
-
-
-
-
 import os
 import io
 import json
@@ -25,7 +10,7 @@ if not GOOGLE_API_KEY:
     raise EnvironmentError("GEMNI_API environment variable not set.")
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Choose your Gemini model
+
 MODEL_NAME = "gemini-2.5-flash-preview-04-17"
 
 def load_image(image_path: str) -> Image.Image:
@@ -105,7 +90,7 @@ def prepare_for_db(data: dict) -> dict:
         "doctor_name": data.get("doctor_name", None),
         "date_of_birth": data.get("Birthdate", None),
         "age": data.get("age", None),
-        "instructions": data.get("instructions", "N/A"),
+        "instructions": data.get("instructions", None),
         "medications": [
             {
                 "name": med.get("name", None),
@@ -118,13 +103,3 @@ def prepare_for_db(data: dict) -> dict:
         ]
     }
 
-
-# if __name__ == "__main__":
-#     # Example usages
-#     image_path = r"C:\\Users\\atiku\\Music\\patient_doctor\\uploads\\medicine_images\\perscription.jpg"
-#     structured_data = extract_structured_prescription_info(image_path)
-#     prepare_for_db(structured_data)
-#     # print(structured_data)
-#     print(structured_data.get("patient_name"))
-#     print(structured_data.get("doctor_name"))
-#     print(structured_data.get("medications"))

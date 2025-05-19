@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from better_profanity import profanity
 
 load_dotenv()
-genai.configure(api_key= os.getenv("GEMNI_API"))
+genai.configure(api_key= os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel(model_name="gemini-2.0-flash")
 profanity.load_censor_words()
 
@@ -18,9 +18,8 @@ def analyze_comment_with_gemini(comment: str) -> int:
     rating_text = response.text.strip()
     
     try:
-        rating = float(rating_text)
+        rating = int(rating_text)
         return min(max(rating, 1), 5)
     except:
         return 1
-    
 

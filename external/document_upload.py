@@ -1,6 +1,5 @@
 # from PyPDF2 import PdfReader
 from pypdf import PdfReader
-from logger import logging
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pinecone import Pinecone, ServerlessSpec
 from exception import CustomException
@@ -8,10 +7,10 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from database import get_db
 from models.document_index_model import DocumentIndex
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from fastapi import Depends
 import sys
 import os
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 
 load_dotenv()
@@ -38,7 +37,7 @@ def handle_document_upload(uploaded_file, chat_name: str, patient_id: int, db: S
             text_chunks = split_text_into_chunks(text)
 
             index = pc.Index(index_name)
-            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
             vectors = embeddings.embed_documents(text_chunks)
 
             upsert_data = [
